@@ -1,18 +1,1 @@
-server:
-  port: 8080
 
-spring:
-  datasource:
-    url: jdbc:postgresql://ep-bold-haze-ahghudko-pooler.c-3.us-east-1.aws.neon.tech:5432/neondb?sslmode=require&channel_binding=require
-    username: neondb_owner
-    password: "npg_9newrc8bExqS"
-
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
-
-jwt:
-  secret: this-is-a-super-secure-jwt-secret-key-1234567890123456
-  expiration: 86400000
