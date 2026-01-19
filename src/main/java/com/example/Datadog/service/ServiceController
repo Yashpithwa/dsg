@@ -1,0 +1,44 @@
+package com.example.Datadog.service;
+
+
+import jakarta.persistence.GeneratedValue;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/services")
+public class ServiceController {
+
+    private final MointoringService mointoringService;
+
+    public ServiceController(MointoringService mointoringService)
+    {
+        this.mointoringService = mointoringService;
+
+    }
+
+    @PostMapping
+    public MointoredService add(
+            @RequestBody MointoredService req, Authentication auth) {
+
+        String email = auth.getName();
+        return mointoringService.addService(req, email);
+    }
+
+
+    @GetMapping
+    public List<MointoredService> list(Authentication auth){
+        return mointoringService.getMyServices(auth.getName());
+    }
+
+    @PutMapping("/{id}/disable")
+    public String disable(@PathVariable Long id,Authentication auth)
+    {
+        mointoringService.disabledService(id, auth.getName());
+        return "SERVICE DISABLED";
+    }
+
+}
