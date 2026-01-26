@@ -30,52 +30,50 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-                // ❌ CSRF not needed for JWT
                 .csrf(csrf -> csrf.disable())
 
-                // ✅ CORS (IMPORTANT FOR REACT)
+                // 🔥 FIXED CORS FOR DEPLOYED FRONTEND
                 .cors(cors -> cors.configurationSource(request -> {
                     CorsConfiguration config = new CorsConfiguration();
-                    config.setAllowedOrigins(List.of("http://localhost:5173"));
+
+                    config.setAllowedOrigins(List.of(
+                            "http://localhost:5173",                 // local
+                            "https://datadog-fronted.vercel.app"      // production frontend
+                    ));
+
                     config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                     config.setAllowedHeaders(List.of("*"));
                     config.setAllowCredentials(true);
+
                     return config;
                 }))
 
-                // ❌ No session (JWT = stateless)
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
 
-                // ❌ Disable default login + basic auth
                 .formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable())
 
-                // ✅ Route security
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/auth/**",
                                 "/error",
-                                "/mailtest"      // ⭐ ADD
+                                "/mailtest"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
 
-
-                // ✅ JWT filter
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    // ✅ Password encoder
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // ✅ Authentication manager (future use)
     @Bean
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration config
