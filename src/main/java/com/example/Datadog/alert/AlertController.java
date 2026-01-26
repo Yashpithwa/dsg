@@ -1,9 +1,9 @@
 package com.example.Datadog.alert;
 
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
 @RestController
 @RequestMapping("/alerts")
 public class AlertController {
@@ -15,7 +15,8 @@ public class AlertController {
     }
 
     @GetMapping
-    public List<Alert> all() {
-        return alertRepository.findAll();
+    public List<Alert> myAlerts(Authentication auth) {
+        return alertRepository
+                .findByService_User_EmailOrderByCreatedAtDesc(auth.getName());
     }
 }

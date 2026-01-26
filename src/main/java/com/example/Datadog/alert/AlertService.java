@@ -1,5 +1,6 @@
 package com.example.Datadog.alert;
 
+import com.example.Datadog.email.EmailService;
 import com.example.Datadog.health.HealthCheckResult;
 import com.example.Datadog.history.HealthHistory;
 import com.example.Datadog.history.HealthHistoryRepository;
@@ -12,69 +13,77 @@ import java.util.List;
 public class AlertService {
 
     private final AlertRepository alertRepository;
-    private final HealthHistoryRepository healthHistoryRepository;
+    private final HealthHistoryRepository historyRepository;
+    private final EmailService emailService;
 
     public AlertService(AlertRepository alertRepository,
-                        HealthHistoryRepository healthHistoryRepository) {
+                        HealthHistoryRepository historyRepository,
+                        EmailService emailService) {
         this.alertRepository = alertRepository;
-        this.healthHistoryRepository = healthHistoryRepository;
+        this.historyRepository = historyRepository;
+        this.emailService = emailService;
     }
 
-    public void evaluate(MointoredService mointoredService,
-                         HealthCheckResult healthCheckResult) {
+    public void evaluate(MointoredService service,
+                         HealthCheckResult result) {
 
         List<HealthHistory> recent =
-                healthHistoryRepository
-                        .findByService_IdOrderByCheckAtDesc(mointoredService.getId());
+                historyRepository.findByService_IdOrderByCheckAtDesc(service.getId());
 
-        // FIXED if condition
-        if (recent.size() >= 2
-                && "DOWN".equals(recent.get(0).getStatus())
-                && "DOWN".equals(recent.get(1).getStatus())) {
+        // 🚨 DOWN ALERT
+        if (recent.size() >= 2 &&
+                "DOWN".equals(recent.get(0).getStatus()) &&
+                "DOWN".equals(recent.get(1).getStatus())) {
 
-            openAlertIfNotExists(
-                    mointoredService,
-                    "DOWN",
-                    "Service is DOWN continuously"
-            );
+            openAlert(service, "DOWN", "Service is DOWN continuously");
         }
 
-        if (healthCheckResult.getResponseTime() > 2000) {
-            openAlertIfNotExists(
-                    mointoredService,
-                    "SLOW",
-                    "Service response is slow"
-            );
+        // 🐢 SLOW ALERT
+        if (result.getResponseTime() > 2000) {
+            openAlert(service, "SLOW", "Service response is slow");
         }
 
-        if ("UP".equals(healthCheckResult.getStatus())) {
-            closeAlertIfExists(mointoredService);
+        // ✅ RECOVERY
+        if ("UP".equals(result.getStatus())) {
+            closeAlert(service, "DOWN");
+            closeAlert(service, "SLOW");
         }
     }
 
-    private void openAlertIfNotExists(
-            MointoredService mointoredService,
-            String type,
-            String message
-    ) {
+    private void openAlert(MointoredService service, String type, String msg) {
+
         alertRepository
-                .findByService_IdAndStatus(mointoredService.getId(), "OPEN")
+                .findByService_IdAndTypeAndStatus(service.getId(), type, "OPEN")
                 .orElseGet(() -> {
                     Alert alert = new Alert();
-                    alert.setMointoredService(mointoredService);
+                    alert.setService(service);
                     alert.setType(type);
                     alert.setStatus("OPEN");
-                    alert.setMessage(message);
-                    return alertRepository.save(alert);
+                    alert.setMessage(msg);
+                    alertRepository.save(alert);
+
+                    emailService.send(
+                            service.getUser().getEmail(),
+                            "🚨 Alert: " + type,
+                            msg + "\nService: " + service.getServiceName()
+                    );
+
+                    return alert;
                 });
     }
 
-    private void closeAlertIfExists(MointoredService mointoredService) {
+    private void closeAlert(MointoredService service, String type) {
         alertRepository
-                .findByService_IdAndStatus(mointoredService.getId(), "OPEN")
+                .findByService_IdAndTypeAndStatus(service.getId(), type, "OPEN")
                 .ifPresent(alert -> {
                     alert.close();
                     alertRepository.save(alert);
+
+                    emailService.send(
+                            service.getUser().getEmail(),
+                            "✅ Service Recovered",
+                            service.getServiceName() + " is back UP."
+                    );
                 });
     }
 }

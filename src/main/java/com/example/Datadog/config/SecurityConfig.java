@@ -56,10 +56,12 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/auth/**",
-                                "/error"
+                                "/error",
+                                "/mailtest"      // ⭐ ADD
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
+
 
                 // ✅ JWT filter
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

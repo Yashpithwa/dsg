@@ -1,6 +1,7 @@
 package com.example.Datadog.alert;
 
 import com.example.Datadog.service.MointoredService;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -24,53 +25,20 @@ public class Alert {
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime closedAt;
 
-    // ===== GETTERS (IMPORTANT) =====
+    // GETTERS
+    public Long getId() { return id; }
+    public MointoredService getService() { return service; }
+    public String getType() { return type; }
+    public String getStatus() { return status; }
+    public String getMessage() { return message; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public LocalDateTime getClosedAt() { return closedAt; }
 
-    public Long getId() {
-        return id;
-    }
-
-    public MointoredService getService() {
-        return service;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public LocalDateTime getClosedAt() {
-        return closedAt;
-    }
-
-    // ===== SETTERS =====
-
-    public void setMointoredService(MointoredService service) {
-        this.service = service;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
+    // SETTERS
+    public void setService(MointoredService service) { this.service = service; }
+    public void setType(String type) { this.type = type; }
+    public void setStatus(String status) { this.status = status; }
+    public void setMessage(String message) { this.message = message; }
 
     public void close() {
         this.status = "CLOSED";
