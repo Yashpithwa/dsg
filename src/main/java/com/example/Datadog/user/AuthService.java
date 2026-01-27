@@ -4,6 +4,10 @@ import com.example.Datadog.jwt.JwtUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+
 @Service
 public class AuthService {
 
@@ -22,11 +26,30 @@ public class AuthService {
         repo.save(user);
     }
 
-    public String login(String email, String password) {
-        User user = repo.findByEmail(email).orElseThrow();
+    public Map<String, Object> login(String email, String password) {
+
+        User user = repo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
         if (!encoder.matches(password, user.getPassword())) {
             throw new RuntimeException("Invalid credentials");
         }
-        return jwtUtil.generateToken(email);
+
+        // 🔥 Trial Expiry Check
+        if (!user.isTrialExpired() &&
+                LocalDateTime.now().isAfter(user.getTrialEndDate())) {
+
+            user.setTrialExpired(true);
+            repo.save(user);
+        }
+
+        String token = jwtUtil.generateToken(user.getEmail(), user.isTrialExpired());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("token", token);
+        response.put("trialExpired", user.isTrialExpired());
+        response.put("trialEndDate", user.getTrialEndDate());
+
+        return response;
     }
 }
