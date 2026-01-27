@@ -21,15 +21,13 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public Map<String, String> login(@RequestBody User user) {
-        String token = service.login(user.getEmail(), user.getPassword());
-        return Map.of("token", token);
+    public Map<String, Object> login(@RequestBody User user) {
+        return service.login(user.getEmail(), user.getPassword());
     }
 
-    // ✅ FIX HERE
     @GetMapping("/check")
     public String checkJwt() {
         return "JWT WORKING BRO 🔥";
     }
-
 }
+
