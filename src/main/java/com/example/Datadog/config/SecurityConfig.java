@@ -38,7 +38,8 @@ public class SecurityConfig {
 
                     config.setAllowedOrigins(List.of(
                             "http://localhost:5173",                 // local
-                            "https://datadog-fronted.vercel.app"      // production frontend
+                            "https://datadog-fronted.vercel.app",
+                        "https://observex-frontend.vercel.app/"// production frontend
                     ));
 
                     config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
