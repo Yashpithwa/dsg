@@ -1,5 +1,6 @@
 package com.example.Datadog.jwt;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -20,14 +21,13 @@ public class JwtUtil {
     private long expiration;
 
     private Key key() {
-        return Keys.hmacShaKeyFor(
-                secret.getBytes(StandardCharsets.UTF_8)
-        );
+        return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateToken(String email) {
+    public String generateToken(String email, boolean trialExpired) {
         return Jwts.builder()
                 .setSubject(email)
+                .claim("trialExpired", trialExpired)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(key(), SignatureAlgorithm.HS256)
@@ -35,11 +35,19 @@ public class JwtUtil {
     }
 
     public String extractEmail(String token) {
+        return getClaims(token).getSubject();
+    }
+
+    public boolean isTrialExpired(String token) {
+        return getClaims(token).get("trialExpired", Boolean.class);
+    }
+
+    private Claims getClaims(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(key())
                 .build()
                 .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
+                .getBody();
     }
 }
+
